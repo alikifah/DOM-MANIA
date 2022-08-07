@@ -8,13 +8,13 @@
 //######################################################################
 //#######  BASIC DOM MANIBULATION CODE  #######################################
 //######################################################################
+
 function get(id) { return document.getElementById(id); }
-function add(tag, _parent = '', id = '', classes = '', text = '', onClick = null) {
-	
-	if (isString(_parent))
-		_parent = get(_parent);
-	if (!isElement( _parent))
-		_parent = document.body;
+function add(tag, parent = '', id = '', classes = '', text = '', onClick = null) {	
+	if (isString(parent))
+		parent = get(parent);
+	if (!isElement( parent))
+		parent = document.body;
 	const elementToAdd = document.createElement(tag);	
 	if (id === '')
 		id = uniqueID(tag + '-');
@@ -22,10 +22,8 @@ function add(tag, _parent = '', id = '', classes = '', text = '', onClick = null
 	
 	if (classes.length > 0) {
 		classes = classes.trim();
-		classes = classes.replace('.', ' ');
-		classes = classes.replace('/', ' ');
 		classes = classes.reduceWhiteSpace();
-		let classArray = classes.split(" ");
+		let classArray = classes.split(' ');
 		for (var className of classArray)
 			elementToAdd.classList.add(className);
 	}
@@ -36,10 +34,67 @@ function add(tag, _parent = '', id = '', classes = '', text = '', onClick = null
 		else
 			elementToAdd.innerText = text;
 	}
-	_parent.appendChild(elementToAdd);
+	parent.appendChild(elementToAdd);
 	if (onClick != null && onClick != '')
 		elementToAdd.addEventListener('click', onClick);
 	return elementToAdd;
+}
+
+function insertAfter(tag, referenceNodeToAddAfter, id = '', classes = '', text = '', onClick = null) {
+	if (isString(referenceNodeToAddAfter))
+		referenceNodeToAddAfter = get(referenceNodeToAddAfter);
+	if (!isElement(referenceNodeToAddAfter)) 
+		return add(tag, '', id, classes, text, onClick);
+
+	const elementToAdd = document.createElement(tag);
+	if (id === '')
+		id = uniqueID(tag + '-');
+	elementToAdd.id = id;
+	if (classes.length > 0) {
+		classes = classes.trim();
+		classes = classes.reduceWhiteSpace();
+		let classArray = classes.split(" ");
+		for (var className of classArray)
+			elementToAdd.classList.add(className);
+	}
+	if (text.length > 0) {
+		if (tag === 'input' || tag === 'textarea')
+			elementToAdd.value = text;
+		else
+			elementToAdd.innerText = text;
+		referenceNodeToAddAfter.parentNode.insertBefore(elementToAdd, referenceNodeToAddAfter.nextSibling);
+		if (onClick != null)
+			elementToAdd.addEventListener('click', onClick);
+		return elementToAdd;
+	}
+}
+function insertBefore(tag, referenceNodeToAddBefore, id = '', classes = '', text = '', onClick = null) {
+	if (isString(referenceNodeToAddBefore))
+		referenceNodeToAddBefore = get(referenceNodeToAddBefore);
+	if (!isElement(referenceNodeToAddBefore))
+		return add(tag, '', id, classes, text, onClick);
+
+	const elementToAdd = document.createElement(tag);
+	if (id === '')
+		id = uniqueID(tag + '-');
+	elementToAdd.id = id;
+	if (classes.length > 0) {
+		classes = classes.trim();
+		classes = classes.reduceWhiteSpace();
+		let classArray = classes.split(" ");
+		for (var className of classArray)
+			elementToAdd.classList.add(className);
+	}
+	if (text.length > 0) {
+		if (tag === 'input' || tag === 'textarea')
+			elementToAdd.value = text;
+		else
+			elementToAdd.innerText = text;
+		referenceNodeToAddBefore.parentNode.insertBefore(elementToAdd, referenceNodeToAddBefore);
+		if (onClick != null)
+			elementToAdd.addEventListener('click', onClick);
+		return elementToAdd;
+	}
 }
 function remove(obj) {
 	if (isString(obj)) 
@@ -74,12 +129,28 @@ function getSubChildren( parent,tag='', subChildren=[] ){
 	return subChildren;
 }
 
+function addClass(obj, className) {
+	if (isString(obj)) obj = get(obj);
+	if (!isElement(obj)) return;
+	obj.classList.add(className);
+}
+function removeClass(obj, className) {
+	if (isString(obj)) obj = get(obj);
+	if (!isElement(obj)) return;
+	obj.classList.remove(className);
+}
+function hasClass(obj, className) {
+	if (isString(obj)) obj = get(obj);
+	if (!isElement(obj)) return false;
+	return obj.classList.contains(className);
+}
 //######################################################################
 //#######  TABLE MANIBULATION CODE  #######################################
 //######################################################################
 const tablesClickEvents = new Map(); // key=table.id/ table.id + '-function name' , value= function body
 const selectedRows = new Map();// key=table id, value=array of rows
 let activeContextMenu = null;
+let activeConfirmationPanel = null;
 const defaultCellPadding="5px";
 const defaultCellMargin="5px";
 const defaultCellHeight="15px";
@@ -934,6 +1005,10 @@ function addInput(caption, type='text',parent='',id='', classes=''){
 	return input;
 }
 
+
+
+
+
 //#######################################################################################################
 //#######################################################################################################
 //#############  helper functions  ################################################
@@ -1234,8 +1309,7 @@ class contextMenu {
 		this.#cMenu.style.display = "none";
 		this.enableScroll(); 
 	}
-	show() { this.#cMenu.style.display = "block";  }
-
+	show() { this.#cMenu.style.display = "block";}
 
 	manageContextMenu(x, y) {
 		this.show();
@@ -1271,14 +1345,11 @@ class contextMenu {
 	
 
 	addBtn(caption, onClickEvent, associatedTags = '' ) {// element = the array of elements to show the button on
-	//let lastBtn;
 		if (this.#contextMenuBtnsInfo.has(caption)) return;
 		let arr = [];
 		arr.push(onClickEvent);
 		arr.push(associatedTags);
 		this.#contextMenuBtnsInfo.set(caption, arr);
-		
-		
 		let b = add('div', this.#cMenu, '', this.#btnClasses, caption, onClickEvent);
 				if (this.#btnClasses === '') { // load default btn styles
 					this.#borderBottom = "1px solid blue";
@@ -1488,5 +1559,139 @@ class TableDataProvider{
 	}
 } // end class TableDataProvider
 
+
+class confirmation{
+	#panelContainer;
+	#panel;
+	#captionContainer;
+	#caption;
+	#btnContainer;
+	#yesBtn;
+	#noBtn;
+	#question;
+	#yesCaption;
+	#noCaption;
+	#yesCallback=null;
+	#noCallback=null;
+
+	// styling css classes
+	#yesBtnClasses = '';
+	#noBtnClasses = '';
+	#panelClasses = '';
+	#captionClasses = ''
+
+
+	constructor(panelClasses = '', yesBtnClasses = '', noBtnClasses='' , captionClasses='') {
+		if (activeConfirmationPanel !== null) return;
+		activeConfirmationPanel = this;
+		this.#yesBtnClasses = yesBtnClasses;
+		this.#noBtnClasses = noBtnClasses;
+		this.#panelClasses = panelClasses;
+		this.#captionClasses = captionClasses;
+		this.initialize();
+	}
+	disable() {
+		if (this.#yesCallback !== null)
+			this.#yesBtn.removeEventListener('click', this.#yesCallback);
+		if (this.#noCallback !== null)
+			this.#noBtn.removeEventListener('click', this.#noCallback);
+		this.#noBtn.removeEventListener('click', this.hide.bind(this));
+		this.#yesBtn.removeEventListener('click', this.hide.bind(this));
+		activeConfirmationPanel = null;
+
+	}
+	show(question, yesCaption = 'Yes', noCaption = 'No', yesCallback, noCallback =null) {
+		this.#question = question;
+		this.#yesCaption = yesCaption;
+		this.#panelContainer.style.display = "flex";
+		this.#caption.textContent = question;
+		this.#yesBtn.textContent = yesCaption;
+		this.#noBtn.textContent = noCaption;
+
+		if (this.#yesCallback !== null)
+			this.#yesBtn.removeEventListener('click', this.#yesCallback);
+		this.#yesCallback = yesCallback;
+		this.#yesBtn.addEventListener('click', yesCallback);
+
+		if (this.#noCallback !== null)
+			this.#noBtn.removeEventListener('click', this.#noCallback);
+		this.#noCallback = noCallback;
+		this.#noBtn.addEventListener('click', this.#noCallback);
+	}
+	hide() { this.#panelContainer.style.display = "none";}
+	initialize() {
+		this.#panelContainer = add('div', 'panelContainer');
+		this.#panelContainer.style.width = "100%";
+		this.#panelContainer.style.height = "100%";
+		this.#panelContainer.style.top = "0px";
+		this.#panelContainer.style.left = "0px";
+		this.#panelContainer.style.textAlign = "center";
+		this.#panelContainer.style.position = "fixed";
+		this.#panelContainer.style.display = "flex";
+		this.#panelContainer.style.alignItems = "center";
+		this.#panelContainer.style.justifyContent = "center";
+		
+		this.#panel = add('div', this.#panelContainer, '', this.#panelClasses);
+		if (this.#panelClasses === '') {
+			this.#panel.style.display = "grid";
+			this.#panel.style.gridTemplateRows = "6fr 1fr";
+			this.#panel.style.alignItems= "stretch";
+			this.#panel.style.borderRadius = "15px";
+			this.#panel.style.backgroundColor = "white";
+			this.#panel.style.boxShadow = "0 0 1em black";
+			this.#panel.style.width = "320px";
+			this.#panel.style.height = "200px";
+		}
+
+		this.#caption = add('label', this.#panel, 'panelLabel', this.#captionClasses, this.#question);
+		if (this.#captionClasses === '') {
+			this.#caption.style.display = "flex";
+			this.#caption.style.justifyContent = "center";
+			this.#caption.style.alignItems = "center";
+			this.#caption.style.height = "100%";
+			this.#caption.style.color = "black";
+			this.#caption.style.backgroundColor = "white";
+			this.#caption.style.borderRadius = "15px 15px 0 0";
+			this.#caption.style.paddingTop = "10px";
+			this.#caption.style.fontWeight = "600";
+			this.#caption.style.fontSize = "16px";
+		}
+
+		this.#btnContainer = add('div', this.#panel, 'captionContainer');
+
+		this.#yesBtn = add('button', this.#btnContainer, 'yesBtn', this.#yesBtnClasses, this.#yesCaption);
+		if (this.#yesBtnClasses === '') {
+			this.#yesBtn.style.width = "50%";
+			this.#yesBtn.style.height = "100%";
+			this.#yesBtn.style.color = "green";
+			this.#yesBtn.style.fontWeight = "700";
+			this.#yesBtn.style.fontSize = "20px";
+			this.#yesBtn.style.backgroundColor = "white";
+			this.#yesBtn.style.border = "none";
+			this.#yesBtn.style.borderTop = "1px solid grey";
+			this.#yesBtn.style.padding = "15px 32px";
+			this.#yesBtn.style.textAlign = "center";
+			this.#yesBtn.style.borderRadius = "0 0 0 15px";
+		}
+
+		this.#noBtn = add('button', this.#btnContainer, 'noBtn', this.#noBtnClasses, this.#noCaption);
+		if (this.#noBtnClasses === '') {
+			this.#noBtn.style.width = "50%";
+			this.#noBtn.style.height = "100%";
+			this.#noBtn.style.color = "red";
+			this.#noBtn.style.fontWeight = "700";
+			this.#noBtn.style.fontSize = "20px";
+			this.#noBtn.style.backgroundColor = "white";
+			this.#noBtn.style.border = "none";
+			this.#noBtn.style.borderTop = "1px solid grey";
+			this.#noBtn.style.borderLeft = "1px solid grey";
+			this.#noBtn.style.padding = "15px 32px";
+			this.#noBtn.style.textAlign = "center";
+			this.#noBtn.style.borderRadius = "0 0 15px 0";
+		}
+		this.#noBtn.addEventListener('click', this.hide.bind(this));
+		this.#yesBtn.addEventListener('click', this.hide.bind(this));
+	}
+} // end class confirmation
 
 
