@@ -936,7 +936,7 @@ function removeRow(table, rowNum) {
 
 function removeLastRow(table) { if (table === null) return false; let rowCount = getTableRowCount(table); if (rowCount > 0) removeRow(table, rowCount); }
 //########## table input form code #######################################################
-function tableInput(parent, obj, table, id = '', classes = '', lableClasses = '', btnClasses = '', btnCaption = 'Add') {
+function tableInput( table, obj,parent= null, id = '', classes = '', lableClasses = '', btnClasses = '', btnCaption = 'Add') {
 	if (obj === null) return;
 	if (parent === null) parent = document.body;
 	if (!isElement(parent)) parent = get(parent);
