@@ -1588,6 +1588,7 @@ class confirmation{
 		this.#panelClasses = panelClasses;
 		this.#captionClasses = captionClasses;
 		this.initialize();
+		this.hide();
 	}
 	disable() {
 		if (this.#yesCallback !== null)
