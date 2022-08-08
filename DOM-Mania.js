@@ -1623,7 +1623,7 @@ class confirmation {
 			this.#caption.style.color = "black";
 			this.#caption.style.backgroundColor = "white";
 			this.#caption.style.borderRadius = "15px 15px 0 0";
-			this.#caption.style.paddingTop = "10px";
+			this.#caption.style.padding = "10px";
 			this.#caption.style.fontWeight = "600";
 			this.#caption.style.fontSize = "16px";
 		}
