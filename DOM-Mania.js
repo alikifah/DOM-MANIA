@@ -1,8 +1,8 @@
 
 // ============================================================================
 //    				DOM-MANIA
-//	  	Author: Al-Khafaji, Ali Kifah
-//	    Date:   02.08.2022
+//	Author: Al-Khafaji, Ali Kifah
+//	Date:   02.08.2022
 //  	Description: A Javascript library that eases the DOM manibulation
 // ============================================================================
 //######################################################################
@@ -10,16 +10,21 @@
 //######################################################################
 
 function get(id) { return document.getElementById(id); }
-function add(tag, parent = '', id = '', classes = '', text = '', onClick = null) {	
-	if (isString(parent))
-		parent = get(parent);
-	if (!isElement( parent))
-		parent = document.body;
-	const elementToAdd = document.createElement(tag);	
+function add(tag, parent = '', id = '', classes = '', text = '', onClick = null) {
+	if (isString(parent)){
+		if (parent === '')
+			parent = null;
+		else
+			parent = get(parent);			
+	}
+	if (parent === null)
+		parent = document.body;	
+	
+	const elementToAdd = document.createElement(tag);
 	if (id === '')
 		id = uniqueID(tag + '-');
 	elementToAdd.id = id;
-	
+
 	if (classes.length > 0) {
 		classes = classes.trim();
 		classes = classes.reduceWhiteSpace();
@@ -43,7 +48,7 @@ function add(tag, parent = '', id = '', classes = '', text = '', onClick = null)
 function insertAfter(tag, referenceNodeToAddAfter, id = '', classes = '', text = '', onClick = null) {
 	if (isString(referenceNodeToAddAfter))
 		referenceNodeToAddAfter = get(referenceNodeToAddAfter);
-	if (!isElement(referenceNodeToAddAfter)) 
+	if (!isElement(referenceNodeToAddAfter))
 		return add(tag, '', id, classes, text, onClick);
 
 	const elementToAdd = document.createElement(tag);
@@ -97,8 +102,8 @@ function insertBefore(tag, referenceNodeToAddBefore, id = '', classes = '', text
 	}
 }
 function remove(obj) {
-	if (isString(obj)) 
-		obj = get(obj);	
+	if (isString(obj))
+		obj = get(obj);
 	if (isElement(obj)) {
 		obj.remove();
 	}
@@ -114,17 +119,17 @@ function remove(obj) {
 	}
 }
 
-function getSubChildren( parent,tag='', subChildren=[] ){
+function getSubChildren(parent, tag = '', subChildren = []) {
 	let children = parent.children;
 	for (let c of children) {
-		if(tag === ''){
+		if (tag === '') {
 			subChildren.push(c);
 		}
-		else{
-			if ( c.nodeName === tag.toUpperCase() )
+		else {
+			if (c.nodeName === tag.toUpperCase())
 				subChildren.push(c);
 		}
-		getSubChildren(c,tag, subChildren );	
+		getSubChildren(c, tag, subChildren);
 	}
 	return subChildren;
 }
@@ -151,101 +156,101 @@ const tablesClickEvents = new Map(); // key=table.id/ table.id + '-function name
 const selectedRows = new Map();// key=table id, value=array of rows
 let activeContextMenu = null;
 let activeConfirmationPanel = null;
-const defaultCellPadding="5px";
-const defaultCellMargin="5px";
-const defaultCellHeight="15px";
-const defaultCellWidth="50px";
-const defaultTableBorder= "1px solid black";
+const defaultCellPadding = "5px";
+const defaultCellMargin = "5px";
+const defaultCellHeight = "15px";
+const defaultCellWidth = "50px";
+const defaultTableBorder = "1px solid black";
 
 // local clipboard to be used with the context menu
 let clipBoard = null;
-function writeToClipBoard(object){clipBoard = object;}
-function readFromClipBoard(){return clipBoard;}
+function writeToClipBoard(object) { clipBoard = object; }
+function readFromClipBoard() { return clipBoard; }
 
-function addCell(row ,textContent='', onCellClick = defaultMode ){
-	let tag='';
+function addCell(row, textContent = '', onCellClick = defaultMode) {
+	let tag = '';
 	if (row.parentNode.nodeName === 'TBODY' || row.parentNode.nodeName === 'TABLE')
-		tag='td';
+		tag = 'td';
 	else if (row.parentNode.nodeName === 'THEAD')
-		tag='th';
+		tag = 'th';
 	else
 		return;
 	let cell = add(tag, row, '', '', textContent, onCellClick);
-	cell.style.padding=defaultCellPadding;
-	cell.style.margin=defaultCellMargin;
-	cell.style.width=defaultCellWidth;
-	cell.style.height=defaultCellHeight;
-	cell.style.border=defaultTableBorder;
+	cell.style.padding = defaultCellPadding;
+	cell.style.margin = defaultCellMargin;
+	cell.style.width = defaultCellWidth;
+	cell.style.height = defaultCellHeight;
+	cell.style.border = defaultTableBorder;
 	cell.addEventListener('contextmenu', onCellClick);
 	return cell
 }
 
-function addTableEmpty(columnCount=2, rowCount=2, parent='', id = '', tableClasses = '', onCellClick = defaultMode) {
+function addTableEmpty(columnCount = 2, rowCount = 2, parent = '', id = '', tableClasses = '', onCellClick = defaultMode) {
 	let table = add('table', parent, id, tableClasses);
-	table.setAttribute('cellspacing','0');
+	table.setAttribute('cellspacing', '0');
 	if (onCellClick != null) {
 		tablesClickEvents.set(table.id, onCellClick);
 		table.style.cursor = "pointer";
 	}
 	let thead = add('thead', table);
 	let theadRow = add('tr', thead);
-	for(let i=0; i<rowCount;i++){
-		let cell = addCell( theadRow, '', onCellClick );
+	for (let i = 0; i < rowCount; i++) {
+		let cell = addCell(theadRow, '', onCellClick);
 	}
-		
+
 	const tbody = add('tbody', table);
-	for(let i=0; i<rowCount;i++){
+	for (let i = 0; i < rowCount; i++) {
 		let tbodyRow = add('tr', tbody);
-		for(let j=0; j<columnCount;j++){
-			addCell(tbodyRow,'', onCellClick  );
+		for (let j = 0; j < columnCount; j++) {
+			addCell(tbodyRow, '', onCellClick);
 		}
 	}
 	if (onCellClick === defaultMode)
-		addDefaultTableBehaviour(table, true);	
+		addDefaultTableBehaviour(table, true);
 	return table;
 }
 
 function addColumn(table) {
-	let onClick= tablesClickEvents.get(table.id);
+	let onClick = tablesClickEvents.get(table.id);
 	let header = getHeader(table);
-	if (header!== null)
-		addCell( header,'',  onClick );
-	let rows = getRows(table);	
-	for (let row of rows){
-		addCell( row, '', onClick );
+	if (header !== null)
+		addCell(header, '', onClick);
+	let rows = getRows(table);
+	for (let row of rows) {
+		addCell(row, '', onClick);
 	}
 }
 
-function addTableEmptyHeaderless( columnCount=2, rowCount=2, parent='', id = '', tableClasses = '', onCellClick = defaultMode) {
+function addTableEmptyHeaderless(columnCount = 2, rowCount = 2, parent = '', id = '', tableClasses = '', onCellClick = defaultMode) {
 	let table = add('table', parent, id, tableClasses);
-	table.setAttribute('cellspacing','0');
+	table.setAttribute('cellspacing', '0');
 	if (onCellClick != null) {
 		tablesClickEvents.set(table.id, onCellClick);
 		table.style.cursor = "pointer";
 	}
 	const tbody = add('tbody', table);
-	for(let i=0; i<rowCount;i++){
+	for (let i = 0; i < rowCount; i++) {
 		let tbodyRow = add('tr', tbody);
-		for(let j=0; j<columnCount;j++){
-			addCell(tbodyRow,onCellClick  );
+		for (let j = 0; j < columnCount; j++) {
+			addCell(tbodyRow, onCellClick);
 		}
 	}
 	if (onCellClick === defaultMode)
-		addDefaultTableBehaviour(table, true);	
+		addDefaultTableBehaviour(table, true);
 	return table;
 }
 
-function addTable(obj, parent= '', id = '', tableClasses = '', onCellClick = defaultMode) {
+function addTable(obj, parent = '', id = '', tableClasses = '', onCellClick = defaultMode) {
 	var table;
 	if (parent.nodeName === 'TABLE') {
 		addToTable(parent, obj);
 	}
 	else {
 		table = add('table', parent, id, tableClasses);
-		
-		if (tableClasses === ''){
-			table.style.border=defaultTableBorder;
-			table.setAttribute('cellspacing','0');
+
+		if (tableClasses === '') {
+			table.style.border = defaultTableBorder;
+			table.setAttribute('cellspacing', '0');
 		}
 		if (onCellClick != null) {
 			tablesClickEvents.set(id, onCellClick);
@@ -258,13 +263,13 @@ function addTable(obj, parent= '', id = '', tableClasses = '', onCellClick = def
 				// create header
 				let thead = add('thead', table);
 				let theadRow = add('tr', thead);
-				for (let key in obj[0]) { let cell = addCell(theadRow, capitalizeFirstLetter(key) , onCellClick  );}
+				for (let key in obj[0]) { let cell = addCell(theadRow, capitalizeFirstLetter(key), onCellClick); }
 				// add rows to body
 				for (let el of obj) {
 					// create row for every jsn file
 					let tbodyRow = add('tr', tbody);
 					for (let key in el) {
-						let cell = addCell(tbodyRow,el[key], onCellClick  );
+						let cell = addCell(tbodyRow, el[key], onCellClick);
 					}
 				}
 			}
@@ -279,10 +284,10 @@ function addTable(obj, parent= '', id = '', tableClasses = '', onCellClick = def
 			// create header	
 			let thead = add('thead', table);
 			let theadRow = add('tr', thead);
-			for (let key in obj) { let cell = addCell(theadRow, key ); }
+			for (let key in obj) { let cell = addCell(theadRow, key); }
 			// add rows to body
 			let tbodyRow = add('tr', tbody);
-			for (let key in obj) { let bcell = addCell(tbodyRow, obj[key] );}
+			for (let key in obj) { let bcell = addCell(tbodyRow, obj[key]); }
 		}
 	}
 	if (onCellClick === defaultMode)
@@ -292,7 +297,7 @@ function addTable(obj, parent= '', id = '', tableClasses = '', onCellClick = def
 
 function addRow(table) {
 	if (isString(table)) table = get(table);
-	if (!isTable(table)) return;	
+	if (!isTable(table)) return;
 	let clickEvent = tablesClickEvents.get(table.id);
 	let tW = getTableColumnCount(table);
 	let rowParent;
@@ -304,44 +309,43 @@ function addRow(table) {
 	let tbodyRow = add('tr', rowParent);
 
 	for (let i = 0; i < tW; i++) {
-		let cell = add('td', tbodyRow, 'tcell-' + i, '', '', clickEvent); 
-		cell.style.padding=getTableCellPadding(table);
-		cell.style.margin=getTableCellMargin(table);
-		cell.style.height=getTableCellHeight(table);
+		let cell = add('td', tbodyRow, 'tcell-' + i, '', '', clickEvent);
+		cell.style.padding = getTableCellPadding(table);
+		cell.style.margin = getTableCellMargin(table);
+		cell.style.height = getTableCellHeight(table);
 		setTableModeToCell(table, cell);
 	}
 	return tbodyRow;
 }
 
-function getTableCellPadding(table){
-	if(isTable(table)){
-		let cells=getCells(table);
-		if (cells.length >0){
-			if (cells[0].style.padding!="")
+function getTableCellPadding(table) {
+	if (isTable(table)) {
+		let cells = getCells(table);
+		if (cells.length > 0) {
+			if (cells[0].style.padding != "")
 				return cells[0].style.padding;
 		}
 	}
 	return defaultCellPadding;
 }
-function getTableCellMargin(table){
-	if(isTable(table)){
-		let cells=getCells(table);
-		if (cells.length >0){
-			if (cells[0].style.margin!="")
+function getTableCellMargin(table) {
+	if (isTable(table)) {
+		let cells = getCells(table);
+		if (cells.length > 0) {
+			if (cells[0].style.margin != "")
 				return cells[0].style.margin;
 		}
-	}	
+	}
 	return defaultCellMargin;
 }
-function getTableCellHeight(table){
-	if(isTable(table)){
-		let cells=getCells(table);
-		if (cells.length >0)
-		{
-			if (cells[0].style.height!="")
+function getTableCellHeight(table) {
+	if (isTable(table)) {
+		let cells = getCells(table);
+		if (cells.length > 0) {
+			if (cells[0].style.height != "")
 				return cells[0].style.height;
 		}
-	}	
+	}
 	return defaultCellHeight;
 }
 
@@ -354,15 +358,15 @@ function removeEventFromRow(row) {
 		cell.removeEventListener('click', event);
 	}
 }
-function getSelectedText(){
-     if (window.getSelection)
-        return window.getSelection();
-    else if (document.getSelection)
-        return document.getSelection();
+function getSelectedText() {
+	if (window.getSelection)
+		return window.getSelection();
+	else if (document.getSelection)
+		return document.getSelection();
 	else if (document.selection) {
-        return document.selection.createRange().text;
+		return document.selection.createRange().text;
 	}
-    else return '';	
+	else return '';
 }
 
 //##############################################################################
@@ -393,11 +397,11 @@ function setTableMode(table, mode) {
 function setTableModeToCell(table, cell) {
 	if (!isTable(table)) return;
 	if (!isCell(cell)) return;
-	let mode= getTableMode(table);
-	if(mode!= null){
+	let mode = getTableMode(table);
+	if (mode != null) {
 		cell.addEventListener('click', mode);
 		cell.addEventListener('contextmenu', mode);
-	}	
+	}
 }
 function clearTableMode(table) {
 	if (!isTable(table)) return;
@@ -430,19 +434,19 @@ function addDefaultTableBehaviour(table, addToCells = true) {
 	if (!isTable(table)) return;
 
 	if (!tablesClickEvents.has(table.id + '-defaultTableClick'))
-		tablesClickEvents.set(table.id + '-defaultTableClick', function () {clearSelectedRows(table); });
-	
+		tablesClickEvents.set(table.id + '-defaultTableClick', function () { clearSelectedRows(table); });
+
 	if (!tablesClickEvents.has(table.id + '-defaultTableContext'))
 		tablesClickEvents.set(table.id + '-defaultTableContext', function () {
-		if (activeContextMenu != null) {
-			if (!isMouseOverElement(table, getXPositionAfterScroll(event.pageX), getYPositionAfterScroll( event.pageY) ))
-				clearSelectedRows(table);
-		}
-	});
+			if (activeContextMenu != null) {
+				if (!isMouseOverElement(table, getXPositionAfterScroll(event.pageX), getYPositionAfterScroll(event.pageY)))
+					clearSelectedRows(table);
+			}
+		});
 
 	let defaultTableClick = tablesClickEvents.get(table.id + '-defaultTableClick',);
-	let defaultTableContext = tablesClickEvents.get(table.id + '-defaultTableContext',);	
-	
+	let defaultTableContext = tablesClickEvents.get(table.id + '-defaultTableContext',);
+
 	document.addEventListener('click', defaultTableClick);
 	document.addEventListener('contextmenu', defaultTableContext);
 
@@ -482,14 +486,14 @@ function addToTable(table, obj) {
 			for (let el of obj) {
 				// create row for every jsn file
 				let tbodyRow = add('tr', rowParent);
-				for (let key in el) { 
+				for (let key in el) {
 					addCell(tbodyRow, el[key], clickEvent);
 				}
 			}
 		}
 		else { // if array of strings or numbers make headerless table
 			let tbodyRow = add('tr', tbody);
-			for (let item of obj) { 
+			for (let item of obj) {
 				addCell(tbodyRow, item, clickEvent);
 			}
 		}
@@ -536,7 +540,7 @@ function getSelectedRows(table) {
 }
 function selectRow(table, row) {
 	if (isRowSelected(row)) return;
-	
+
 	let arr = [];
 	if (!selectedRows.has(table.id)) {
 		arr.push(row)
@@ -578,29 +582,29 @@ function clearSelectedRows(table) {
 //##############################################################################
 //############# retrieve information from Table #########################################
 //##############################################################################
-	function getData(obj) {
-		if (isString(obj)) obj = get(obj);
-		if (isElement(obj)) {
-			if (isTable(obj)) {
-				if (hasTableHeader(obj))
-					return TableDataProvider.getDataFromTable(obj);
-				else
-					return TableDataProvider.getDataFromTableHeaderless(obj);
-			}
-			else if (isRow(obj))
-				return TableDataProvider.getDatafromRows([obj]);
-		}
-		else if (isArray(obj)) { // if array of rows
-			if (obj.length === 0) return null;
-			if (!isRow(obj[0])) return null;
-			let table = getTableFromRow(obj[0]);
-			if (hasTableHeader(table))
-				return TableDataProvider.getDatafromRows(obj);
+function getData(obj) {
+	if (isString(obj)) obj = get(obj);
+	if (isElement(obj)) {
+		if (isTable(obj)) {
+			if (hasTableHeader(obj))
+				return TableDataProvider.getDataFromTable(obj);
 			else
-				return TableDataProvider.getDatafromRowsHeaderless(obj);
+				return TableDataProvider.getDataFromTableHeaderless(obj);
 		}
-		return null;
+		else if (isRow(obj))
+			return TableDataProvider.getDatafromRows([obj]);
 	}
+	else if (isArray(obj)) { // if array of rows
+		if (obj.length === 0) return null;
+		if (!isRow(obj[0])) return null;
+		let table = getTableFromRow(obj[0]);
+		if (hasTableHeader(table))
+			return TableDataProvider.getDatafromRows(obj);
+		else
+			return TableDataProvider.getDatafromRowsHeaderless(obj);
+	}
+	return null;
+}
 
 function getCell(table, cellX, cellY) {
 	if (!isTable(table)) return null;
@@ -680,7 +684,7 @@ function getRows(table) {
 	let children = table.children;
 	if (children.length === 0) return rows;
 	let rowsCount = getTableRowCount(table);
-	for (let i = 1; i <= rowsCount; i++) {let row = getRow(table, i); if (row !== null ) rows.push(row);}
+	for (let i = 1; i <= rowsCount; i++) { let row = getRow(table, i); if (row !== null) rows.push(row); }
 	return rows;
 }
 function getColumn(table, colName) {
@@ -811,13 +815,13 @@ function getTableColumnCount(table) {
 	if (!isTable(table)) return 0;
 	let children = table.children;
 	if (children.length === 0) return 0;
-	if (hasTableHeader(table)){
+	if (hasTableHeader(table)) {
 		return getHeaderCells(table).length;
 	}
-	else{
+	else {
 		for (let c of children) {
 			let children1 = c.children;
-			let nodeName = c.nodeName;			
+			let nodeName = c.nodeName;
 			if (nodeName === 'TBODY') {
 				for (let c1 of c.children) {
 					if (c1.nodeName === 'TR')
@@ -840,11 +844,11 @@ function getTableRowCount(table) {
 	}
 	return 0;
 }
-function getCellContent(cell){if(!isCell) return '';return cell.textContent;}
+function getCellContent(cell) { if (!isCell) return ''; return cell.textContent; }
 //###########################################################################################################
 //########## update table  ############################################################################
 //###########################################################################################################
-function setCellContent(cell, text){if(!isCell) return; cell.textContent=text;}
+function setCellContent(cell, text) { if (!isCell) return; cell.textContent = text; }
 function editSelectedRow(table) {
 	if (!isTable(table)) return;
 	if (isString(table)) table = get(table);
@@ -936,7 +940,7 @@ function removeRow(table, rowNum) {
 
 function removeLastRow(table) { if (table === null) return false; let rowCount = getTableRowCount(table); if (rowCount > 0) removeRow(table, rowCount); }
 //########## table input form code #######################################################
-function tableInput( table, obj,parent= null, id = '', classes = '', lableClasses = '', btnClasses = '', btnCaption = 'Add') {
+function tableInput(table, obj, parent = null, id = '', classes = '', lableClasses = '', btnClasses = '', btnCaption = 'Add') {
 	if (obj === null) return;
 	if (parent === null) parent = document.body;
 	if (!isElement(parent)) parent = get(parent);
@@ -972,34 +976,34 @@ function tableInput( table, obj,parent= null, id = '', classes = '', lableClasse
 //####### different Dom-Elements ################################################
 //#######################################################################
 
-function addOList(array, parent='', id = '', classes = '') {
+function addOList(array, parent = '', id = '', classes = '') {
 	let list = add('ol', parent, id, classes);
 	for (let el of array) {
 		let item = add('li', list, '', '', String(el));
 	}
 	return list
 }
-function addUList(array , parent='', id = '', classes = '') {
+function addUList(array, parent = '', id = '', classes = '') {
 	let list = add('ul', parent, id, classes);
 	for (let el of array) {
 		let item = add('li', list, '', '', String(el));
 	}
 	return list
 }
-function addImage(src, parent='', id='', classes='') {
+function addImage(src, parent = '', id = '', classes = '') {
 	let img = add('img', parent, id, classes);
 	img.src = src;
 	return img;
 }
-function addButton( caption, onClick=null, parent='', id='', classes='') {
-	let btn = add('button', parent, id, classes,caption, onClick);
+function addButton(caption, onClick = null, parent = '', id = '', classes = '') {
+	let btn = add('button', parent, id, classes, caption, onClick);
 	return btn;
 }
-function addLabel( caption, parent='', id='', classes='') {
+function addLabel(caption, parent = '', id = '', classes = '') {
 	let lbl = add('label', parent, id, classes, caption);
 	return lbl;
 }
-function addInput( type='text',parent='',id='', classes=''){	
+function addInput(type = 'text', parent = '', id = '', classes = '') {
 	let input = add('input', parent, id, classes);
 	input.setAttribute('type', type);
 	return input;
@@ -1067,7 +1071,7 @@ function isEmail(text) { if (text === null) return false; if (!isString(text)) r
 function isDate(text) { if (text === null) return false; if (!isString(text)) return false; if (text.length < 5) return false; let arr = []; if (text.includes('.')) arr = text.split('.'); if (text.includes('/')) arr = text.split('/'); if (text.includes('-')) arr = text.split('-'); if (arr.length === 3 && isNumeric(arr[0]) && isNumeric(arr[1]) && arr[2].length > 1 && isNumeric(arr[2].substring(0, 2))) return true; return false; }
 function stopDefault(event) { event.preventDefault(); event.stopPropagation(); }
 function isMouseOverElement(element, mouseX, mouseY) {
-	if (!isElement( element)) return false;
+	if (!isElement(element)) return false;
 	let rect = element.getBoundingClientRect();
 	let x = rect.x;
 	let y = rect.y;
@@ -1100,14 +1104,14 @@ function getElementX(element) {
 	return rect.x;
 }
 
-function getAllElementsFromPoint(x, y) {return document.elementsFromPoint(x,y);}
-function getXPositionAfterScroll(x){return x - document.documentElement.scrollLeft;	}
-function getYPositionAfterScroll(y){return y - document.documentElement.scrollTop;	}
+function getAllElementsFromPoint(x, y) { return document.elementsFromPoint(x, y); }
+function getXPositionAfterScroll(x) { return x - document.documentElement.scrollLeft; }
+function getYPositionAfterScroll(y) { return y - document.documentElement.scrollTop; }
 
-async function fetchData(url, onRecieve ){
-	let response = await fetch( url );
-	if (!response.ok){
-		const msg='Error: ' + response.status;
+async function fetchData(url, onRecieve) {
+	let response = await fetch(url);
+	if (!response.ok) {
+		const msg = 'Error: ' + response.status;
 		throw new Error(msg);
 	}
 	let data = await response.json();
@@ -1117,6 +1121,88 @@ async function fetchData(url, onRecieve ){
 //#######################################################################################################
 //########  HELPER CLASSES ###################################################################################
 //#######################################################################################################
+
+class TableDataProvider {
+	static getDataFromTableHeaderless(table) {
+		let data = [];
+		let rowCount = getTableRowCount(table);
+		let colCount = getTableColumnCount(table);
+		for (let y = 1; y <= rowCount; y++) {
+			let dContainer = [];
+			let row = getRow(table, y);
+			let cells = row.children;
+			for (let x of cells) {
+				let val = x.textContent;
+				dContainer.push(val);
+			}
+			data.push(dContainer);
+		}
+		return data;
+	}
+	static getDatafromRowsHeaderless(rows) {
+		let data = [];
+		let rowCount = rows.length;
+		if (rowCount === 0) return data;
+		let colCount = getCells(rows[0]).length;
+		for (let row of rows) {
+			let dContainer = [];
+			let cells = row.children;
+			for (let x of cells) {
+				let val = x.textContent;
+				dContainer.push(val);
+			}
+			data.push(dContainer);
+		}
+		return data;
+	}
+	static getDataFromTable(table) {
+		let data = [];
+		let headerCells = getHeaderCells(table);
+		if (headerCells === null) return data;
+		let rowCount = getTableRowCount(table);
+		let colNames = [];
+		for (let c of headerCells) { colNames.push(c.textContent); }
+		let colCount = colNames.length;
+		let jsnB = new jsonBuilder();
+		for (let y = 1; y <= rowCount; y++) {
+			let row = getRow(table, y);
+			let cells = row.children;
+			for (let x = 1; x <= colCount; x++) {
+				let key = makeFirstLetterSmall(colNames[x - 1]);
+				let val = cells[x - 1].textContent;
+				jsnB.add(key, val);
+			}
+			let j = jsnB.jsn();
+			data.push(j);
+		}
+		return data;
+	}
+	static getDatafromRows(rows) {
+		let data = [];
+		if (rows.length === 0) return data;
+		let table = getTableFromRow(rows[0]);
+		let headerCells = getHeaderCells(table);
+		if (headerCells === null) return data;
+		let rowCount = getTableRowCount(table);
+		let colNames = [];
+		for (let c of headerCells) { colNames.push(c.textContent); }
+		let colCount = colNames.length;
+		let jsnB = new jsonBuilder();
+		for (let y = 0; y < rows.length; y++) {
+			let row = rows[y];
+			let cells = row.children;
+			for (let x = 1; x <= colCount; x++) {
+				let key = makeFirstLetterSmall(colNames[x - 1]);
+				let val = cells[x - 1].textContent;
+				jsnB.add(key, val);
+			}
+			let j = jsnB.jsn();
+			data.push(j);
+		}
+		return data;
+	}
+} // end class TableDataProvider
+
 class jsonBuilder {
 	#json;
 	#openingCurlyPracket = '{';
@@ -1270,17 +1356,18 @@ class contextMenu {
 	#x = 0;
 	#y = 0;
 	#bodyHeight;
-	#bodyOverflow;	
+	#bodyOverflow;
 	constructor(menuClasses = '', btnClasses = '') {
 		if (activeContextMenu != null) return;
 		activeContextMenu = this;
 		this.#menuClasses = menuClasses;
 		this.#btnClasses = btnClasses;
-		this.initContextMenu();
-		this.#clickhandler = this.hide.bind(this);
-		this.#contextmenuHandler = this.contextMenu.bind(this);
+		this.#initContextMenu();
+		this.#clickhandler = this.#hide.bind(this);
+		this.#contextmenuHandler = this.#contextMenu.bind(this);
 		this.enable();
 	}
+	
 	disable() {
 		document.removeEventListener('click', this.#clickhandler);
 		document.removeEventListener('contextmenu', this.#contextmenuHandler);
@@ -1291,34 +1378,75 @@ class contextMenu {
 		document.addEventListener('contextmenu', this.#contextmenuHandler);
 	}
 
-	setPosition(mouseX, mouseY) {
-		if (mouseX > window.innerWidth - getElementWidth(this.#cMenu))
-			this.#cMenu.style.left = (mouseX - getElementWidth(this.#cMenu)) + "px";
-		else
-			this.#cMenu.style.left = mouseX + "px";
-		if (mouseY > window.innerHeight - getElementHeight(this.#cMenu))
-			this.#cMenu.style.top = (mouseY - getElementHeight(this.#cMenu)) + "px";
-		else
-			this.#cMenu.style.top = mouseY + "px";
+	#updatePosition(mouseX, mouseY) {
 		this.#x = mouseX;
 		this.#y = mouseY;
 	}
-	hide() { 
+	#hide() {
 		if (this.#cMenu === null) return;
 		this.#cMenu.style.display = "none";
-		this.enableScroll(); 
+		this.#enableScroll();
 	}
-	show() { this.#cMenu.style.display = "block";}
+	#show() { 
+		this.#cMenu.style.display = "block"; 
+		if (this.#x > window.innerWidth - getElementWidth(this.#cMenu))
+			this.#cMenu.style.left = (this.#x - getElementWidth(this.#cMenu)) + "px";
+		else
+			this.#cMenu.style.left = this.#x + "px";
+		if (this.#y > window.innerHeight - getElementHeight(this.#cMenu))
+			this.#cMenu.style.top = (this.#y - getElementHeight(this.#cMenu)) + "px";
+		else
+			this.#cMenu.style.top = this.#y + "px";
+	}
 
-	manageContextMenu(x, y) {
-		this.show();
-		this.setPosition( getXPositionAfterScroll(x),  getYPositionAfterScroll(y));
-		this.updateButttons(x, y);
-		this.stopScroll();
+	// called on mouse right click
+	#contextMenu() { event.preventDefault(); this.#updateContextMenu(event.pageX, event.pageY); }
+	#updateContextMenu(x, y) { 
+		this.#updatePosition(getXPositionAfterScroll(x), getYPositionAfterScroll(y));
+		let visibileBtnsCount = this.#updateButttonsVisibility();
+		if (visibileBtnsCount > 0)
+			this.#show();
+		else
+			this.#hide();
+		this.#stopScroll();
 	}
-	
-	
-	initContextMenu() {
+	#updateButttonsVisibility() {
+		let lastBtn;
+		let visibileBtnsCount=0;
+		if (this.#contextMenuBtnsInfo.size === 0) {
+			this.disable();
+			return;
+		}
+		for (var btnInfo of this.#contextMenuBtnsInfo) {
+			let caption = btnInfo[0];
+			let onClickEvent = btnInfo[1][0];
+			let associatedTags = btnInfo[1][1];
+			
+			let button = this.#contextMenuBtns.get(caption);
+			if (associatedTags != '') {// if has associated element
+				if (this.isTagClicked(associatedTags))// show only when mouse over associated element
+				{
+					button.style.display = 'block';
+					button.style.borderBottom = this.#borderBottom;
+					lastBtn = button;
+					visibileBtnsCount++;
+				}
+				else // hide
+					button.style.display = 'none';
+			}
+			else if (associatedTags = 'none') { // show always
+				button.style.display = 'block';
+				button.style.borderBottom = this.#borderBottom;
+				lastBtn = button;
+				visibileBtnsCount++;
+			}
+		}		
+		if(lastBtn!== undefined)
+			lastBtn.style.borderBottom = "none";
+		return visibileBtnsCount;
+	}
+
+	#initContextMenu() {
 		this.#bodyHeight = document.body.style.height;
 		this.#bodyOverflow = document.body.style.overflow;
 		let parent = document.body;
@@ -1339,227 +1467,72 @@ class contextMenu {
 			this.#cMenu.style.alignContent = "center";
 			this.#cMenu.style.backgroundColor = "white";
 		}
-		this.hide();
+		this.#hide();
 	}
-	
-
-	addBtn(caption, onClickEvent, associatedTags = '' ) {// element = the array of elements to show the button on
+	addBtn(caption, onClickEvent, associatedTags = '') {// element = the array of elements to show the button on
 		if (this.#contextMenuBtnsInfo.has(caption)) return;
 		let arr = [];
 		arr.push(onClickEvent);
 		arr.push(associatedTags);
 		this.#contextMenuBtnsInfo.set(caption, arr);
 		let b = add('div', this.#cMenu, '', this.#btnClasses, caption, onClickEvent);
-				if (this.#btnClasses === '') { // load default btn styles
-					this.#borderBottom = "1px solid blue";
-					b.style.display = "flex";
-					b.style.flexDirection = "column";
-					b.style.justifyContent = "center";
-					b.style.textAlign = "center";
-					b.style.position = "relative";
-					b.style.width = "100%";
-					b.style.height = "auto";
-					b.style.borderBottom = this.#borderBottom;
-					b.style.paddingBottom = "5px";
-					b.style.paddingTop = "5px";
-				}
-				this.#contextMenuBtns.set(caption, b);
-				// set buttons visibility
-				if (associatedTags != '') {// if has associated element
-					if (this.isTagClicked(associatedTags) )// show only when mouse over associated element
-					{
-						b.style.display = 'block';
-						b.style.borderBottom = this.#borderBottom;
-					}
-					else // hide
-						b.style.display = 'none';
-				}
-				else { // show always
-					b.style.display = 'block';
-					b.style.borderBottom = this.#borderBottom;
-				}
+		if (this.#btnClasses === '') { // load default btn styles
+			this.#borderBottom = "1px solid blue";
+			b.style.display = "flex";
+			b.style.flexDirection = "column";
+			b.style.justifyContent = "center";
+			b.style.textAlign = "center";
+			b.style.position = "relative";
+			b.style.width = "100%";
+			b.style.height = "auto";
+			b.style.borderBottom = this.#borderBottom;
+			b.style.paddingBottom = "5px";
+			b.style.paddingTop = "5px";
+		}
+		this.#contextMenuBtns.set(caption, b);
 		return b;
 	}
-	
-	
-	initializeButtons(){
-		let lastBtn;
-		if (this.#contextMenuBtns.size === 0) {
-			// initialize btns
-			for (var btn of this.#contextMenuBtnsInfo) {
-				let associatedTags = btn[1][1];
-				let caption = btn[0];
-				let onClickEvent = btn[1][0];
-				
-				let b = addBtn(caption,onClickEvent,associatedTags );
-				if (b.style.display === 'block')
-					lastBtn=b;
-
-			}
-		
-			lastBtn.style.borderBottom = "none";
-		}
-	}
-	updateButttons() {
-		let lastBtn;
-		if (this.#contextMenuBtnsInfo.size === 0) {
-			this.disable();
-			return;
-		}
-			for (var btn of this.#contextMenuBtnsInfo) {
-				let associatedTags = btn[1][1];
-				let caption = btn[0];
-				let onClickEvent = btn[1][0];
-				let b = this.#contextMenuBtns.get(caption);
-				//if (b === undefined) continue;
-				if (associatedTags != '') {// if has associated element
-					if (this.isTagClicked(associatedTags))// show only when mouse over associated element
-					{
-						b.style.display = 'block';
-						b.style.borderBottom = this.#borderBottom;
-						lastBtn = b;
-					}
-					else // hide
-						b.style.display = 'none';
-				}
-				else { // show always
-					b.style.display = 'block';
-					b.style.borderBottom = this.#borderBottom;
-					lastBtn = b;
-				}
-			}
-			//if(lastBtn!== undefined)
-				lastBtn.style.borderBottom = "none";
-	}
-
-	contextMenu() { event.preventDefault(); this.manageContextMenu(event.pageX, event.pageY);}
-	
-	getAllElementsClicked() {		
+	getAllElementsClicked() {
 		let el = getAllElementsFromPoint(this.#x, this.#y);
 		el.remove(document.children[0]);
 		el.remove(document.body);
-		el.remove(this.#cMenu);				
-		return el;	
+		el.remove(this.#cMenu);
+		return el;
 	}
-	getElementClicked(tag){
+	getElementClicked(tag) {
 		let el = this.getAllElementsClicked();
-		for (let e of el) { 
-			if (e.nodeName === tag.toUpperCase()) { 
+		for (let e of el) {
+			if (e.nodeName === tag.toUpperCase()) {
 				return e;
 			}
 		}
-		return null;	
+		return null;
 	}
-
-	isTagClicked(type){
-		if(!isString(type) || type === '') return false;
+	isTagClicked(type) {
+		if (!isString(type) || type === '') return false;
 		let elementsClicked = this.getAllElementsClicked();
 		if (type === 'none')
-			if (elementsClicked.length==0 )
+			if (elementsClicked.length == 0)
 				return true;
-		type=type.toUpperCase();
-		for (let el of elementsClicked){
-			if (el.nodeName=== type)
+		type = type.toUpperCase();
+		for (let el of elementsClicked) {
+			if (el.nodeName === type)
 				return true;
 		}
-		return false;		
+		return false;
 	}
-
-
-stopScroll(){
-	document.body.style.height="100%";
-	document.body.style.overflow="hidden";
-}
-enableScroll(){
-	document.body.style.height=this.#bodyHeight;
-	document.body.style.overflow=this.#bodyOverflow;
-}
+	#stopScroll() {
+		document.body.style.height = "100%";
+		document.body.style.overflow = "hidden";
+	}
+	#enableScroll() {
+		document.body.style.height = this.#bodyHeight;
+		document.body.style.overflow = this.#bodyOverflow;
+	}
 
 }// end class contextMenu
 
-class TableDataProvider{
-	static getDataFromTableHeaderless(table) {
-		let data = [];
-		let rowCount = getTableRowCount(table);
-		let colCount = getTableColumnCount(table);
-		for (let y = 1; y <= rowCount; y++) {
-			let dContainer = [];
-			let row = getRow(table, y);
-			let cells = row.children;
-			for (let x of cells) {
-				let val = x.textContent;
-				dContainer.push(val);
-			}
-			data.push(dContainer);
-		}
-		return data;
-	}
-	static getDatafromRowsHeaderless(rows) {
-		let data = [];
-		let rowCount = rows.length;
-		if (rowCount === 0) return data;
-		let colCount = getCells(rows[0]).length;
-		for (let row of rows) {
-			let dContainer = [];
-			let cells = row.children;
-			for (let x of cells) {
-				let val = x.textContent;
-				dContainer.push(val);
-			}
-			data.push(dContainer);
-		}
-		return data;
-	}
-	static getDataFromTable(table) {
-		let data = [];
-		let headerCells = getHeaderCells(table);
-		if (headerCells === null) return data;
-		let rowCount = getTableRowCount(table);
-		let colNames = [];
-		for (let c of headerCells) { colNames.push(c.textContent); }
-		let colCount = colNames.length;
-		let jsnB = new jsonBuilder();
-		for (let y = 1; y <= rowCount; y++) {
-			let row = getRow(table, y);
-			let cells = row.children;
-			for (let x = 1; x <= colCount; x++) {
-				let key = makeFirstLetterSmall(colNames[x - 1]);
-				let val = cells[x - 1].textContent;
-				jsnB.add(key, val);
-			}
-			let j = jsnB.jsn();
-			data.push(j);
-		}
-		return data;
-	}
-	static getDatafromRows(rows) {
-		let data = [];
-		if (rows.length === 0) return data;
-		let table = getTableFromRow(rows[0]);
-		let headerCells = getHeaderCells(table);
-		if (headerCells === null) return data;
-		let rowCount = getTableRowCount(table);
-		let colNames = [];
-		for (let c of headerCells) { colNames.push(c.textContent); }
-		let colCount = colNames.length;
-		let jsnB = new jsonBuilder();
-		for (let y = 0; y < rows.length; y++) {
-			let row = rows[y];
-			let cells = row.children;
-			for (let x = 1; x <= colCount; x++) {
-				let key = makeFirstLetterSmall(colNames[x - 1]);
-				let val = cells[x - 1].textContent;
-				jsnB.add(key, val);
-			}
-			let j = jsnB.jsn();
-			data.push(j);
-		}
-		return data;
-	}
-} // end class TableDataProvider
-
-
-class confirmation{
+class confirmation {
 	#panelContainer;
 	#panel;
 	#captionContainer;
@@ -1570,24 +1543,22 @@ class confirmation{
 	#question;
 	#yesCaption;
 	#noCaption;
-	#yesCallback=null;
-	#noCallback=null;
+	#yesCallback = null;
+	#noCallback = null;
 
 	// styling css classes
 	#yesBtnClasses = '';
 	#noBtnClasses = '';
 	#panelClasses = '';
 	#captionClasses = ''
-
-
-	constructor(panelClasses = '', yesBtnClasses = '', noBtnClasses='' , captionClasses='') {
+	constructor(panelClasses = '', yesBtnClasses = '', noBtnClasses = '', captionClasses = '') {
 		if (activeConfirmationPanel !== null) return;
 		activeConfirmationPanel = this;
 		this.#yesBtnClasses = yesBtnClasses;
 		this.#noBtnClasses = noBtnClasses;
 		this.#panelClasses = panelClasses;
 		this.#captionClasses = captionClasses;
-		this.initialize();
+		this.#initialize();
 		this.hide();
 	}
 	disable() {
@@ -1600,7 +1571,7 @@ class confirmation{
 		activeConfirmationPanel = null;
 
 	}
-	show(question, yesCaption = 'Yes', noCaption = 'No', yesCallback, noCallback =null) {
+	show(question, yesCaption = 'Yes', noCaption = 'No', yesCallback, noCallback = null) {
 		this.#question = question;
 		this.#yesCaption = yesCaption;
 		this.#panelContainer.style.display = "flex";
@@ -1618,8 +1589,8 @@ class confirmation{
 		this.#noCallback = noCallback;
 		this.#noBtn.addEventListener('click', this.#noCallback);
 	}
-	hide() { this.#panelContainer.style.display = "none";}
-	initialize() {
+	hide() { this.#panelContainer.style.display = "none"; }
+	#initialize() {
 		this.#panelContainer = add('div', 'panelContainer');
 		this.#panelContainer.style.width = "100%";
 		this.#panelContainer.style.height = "100%";
@@ -1630,12 +1601,12 @@ class confirmation{
 		this.#panelContainer.style.display = "flex";
 		this.#panelContainer.style.alignItems = "center";
 		this.#panelContainer.style.justifyContent = "center";
-		
+
 		this.#panel = add('div', this.#panelContainer, '', this.#panelClasses);
 		if (this.#panelClasses === '') {
 			this.#panel.style.display = "grid";
 			this.#panel.style.gridTemplateRows = "6fr 1fr";
-			this.#panel.style.alignItems= "stretch";
+			this.#panel.style.alignItems = "stretch";
 			this.#panel.style.borderRadius = "15px";
 			this.#panel.style.backgroundColor = "white";
 			this.#panel.style.boxShadow = "0 0 1em black";
@@ -1693,5 +1664,4 @@ class confirmation{
 		this.#yesBtn.addEventListener('click', this.hide.bind(this));
 	}
 } // end class confirmation
-
 
