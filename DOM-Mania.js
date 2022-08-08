@@ -999,12 +999,11 @@ function addLabel( caption, parent='', id='', classes='') {
 	let lbl = add('label', parent, id, classes, caption);
 	return lbl;
 }
-function addInput(caption, type='text',parent='',id='', classes=''){	
+function addInput( type='text',parent='',id='', classes=''){	
 	let input = add('input', parent, id, classes);
 	input.setAttribute('type', type);
 	return input;
 }
-
 
 
 
