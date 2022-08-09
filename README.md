@@ -507,7 +507,7 @@ Discription: returns an array of all elements that are under the mouse pointer w
 
 * getElementClicked(tag) 
 
-Discription: returns a single element of a specific tag . Returns null when no element of this type were found under the mouse cursor. 
+Discription: returns a single element of a specific tag . Returns null when no element of this type is found under the mouse cursor. 
 
 * isTagClicked(type) 
 
