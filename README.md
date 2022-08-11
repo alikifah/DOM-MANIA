@@ -1,5 +1,5 @@
 # DOM-MANIA
-#### A simple and light weight JS DOM-Manipulation library that .
+#### A light weight JS DOM-Manipulation library.
 a sample app created with this library:
 https://utilities.alikifah.cyou/Home/Calculator
 
